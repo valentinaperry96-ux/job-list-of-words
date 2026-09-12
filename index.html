@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess the Job — Collocations with Explanations</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: linear-gradient(160deg, #eef2f7 0%, #dbe4f2 100%);
+    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    color: #1e2c44;
+    padding: clamp(8px, 1.6vh, 22px) clamp(10px, 1.6vw, 28px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .board {
+    width: min(1500px, 100%);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1.2vh, 16px);
+    min-height: 0;
+  }
+
+  /* ---------- Header ---------- */
+  .board-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    padding: 0 4px;
+  }
+
+  .board-head h1 {
+    font-size: clamp(15px, 2.1vh, 24px);
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: #1e3c72;
+  }
+
+  .board-head .meta {
+    font-size: clamp(10px, 1.25vh, 13px);
+    font-weight: 600;
+    color: #8593b0;
+  }
+
+  /* ---------- Grid ---------- */
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: auto;
+    align-content: center;
+    gap: clamp(7px, 1.15vh, 16px);
+    min-height: 0;
+  }
+
+  /* ---------- Group card ---------- */
+  .group {
+    --accent: #2a5298;
+    background: #fff;
+    border-radius: clamp(10px, 1.4vh, 18px);
+    border-top: 3px solid var(--accent);
+    padding: clamp(7px, 1.15vh, 16px) clamp(9px, 0.95vw, 18px);
+    box-shadow: 0 10px 26px -16px rgba(20, 40, 80, 0.35);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .group h2 {
+    font-size: clamp(9.5px, 1.18vh, 14px);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: clamp(3px, 0.55vh, 8px);
+    margin-bottom: clamp(4px, 0.75vh, 10px);
+    border-bottom: 1px solid #eef2f8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .group h2 .n {
+    margin-left: auto;
+    font-size: 0.78em;
+    font-weight: 700;
+    color: #9aa5bd;
+    background: #f2f5fb;
+    border-radius: 999px;
+    padding: 2px 8px;
+    flex-shrink: 0;
+  }
+
+  .group ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1px, 0.3vh, 5px);
+  }
+
+  /* Each phrase = a button */
+  .phrase {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    font: inherit;
+    font-size: clamp(11px, 1.42vh, 17px);
+    font-weight: 600;
+    line-height: 1.28;
+    color: #2c3e5c;
+    cursor: pointer;
+    border-radius: 7px;
+    padding: 2px 6px 2px 14px;
+    position: relative;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .phrase::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 0.72em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.55;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  .phrase:hover {
+    background: #f2f6ff;
+    color: #1e3c72;
+  }
+
+  .phrase.open {
+    background: #eef3ff;
+    color: #1e3c72;
+  }
+
+  .phrase.open::before {
+    transform: scale(1.6);
+    opacity: 1;
+  }
+
+  /* Explanation panel under the phrase */
+  .explain {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.28s ease;
+    padding-left: 14px;
+  }
+
+  .explain > div {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .explain p {
+    font-size: clamp(10px, 1.22vh, 14px);
+    font-weight: 500;
+    font-style: italic;
+    line-height: 1.32;
+    color: #5b6b8a;
+    padding: 3px 8px 5px 6px;
+    border-left: 2px solid var(--accent);
+    margin-left: 1px;
+  }
+
+  .explain.open {
+    grid-template-rows: 1fr;
+  }
+
+  /* Wide card (spans 2 columns) */
+  .group.wide { grid-column: span 2; }
+
+  .group.wide ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1px, 0.3vh, 5px) clamp(10px, 1.1vw, 22px);
+    align-content: start;
+  }
+
+  /* ---------- Accent colours ---------- */
+  .c-team     { --accent: #2a5298; }
+  .c-health   { --accent: #d1476a; }
+  .c-science  { --accent: #7050c9; }
+  .c-police   { --accent: #b06a10; }
+  .c-avia     { --accent: #1f8ba8; }
+  .c-media    { --accent: #c95f1c; }
+  .c-business { --accent: #15854a; }
+
+  /* ---------- Small screens: allow scrolling ---------- */
+  @media (max-width: 880px), (max-height: 520px) {
+    body { overflow: auto; align-items: flex-start; }
+    .board { height: auto; }
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-content: start;
+    }
+    .group.wide { grid-column: span 2; }
+  }
+
+  @media (max-width: 520px) {
+    .grid { grid-template-columns: 1fr; }
+    .group.wide { grid-column: span 1; }
+    .group.wide ul { grid-template-columns: 1fr; }
+    .phrase { font-size: 14.5px; }
+    .explain p { font-size: 13.5px; }
+    .group h2 { font-size: 12px; }
+  }
+
+  @media print {
+    body { overflow: visible; background: #fff; padding: 0; }
+    .board { height: auto; }
+    .group { box-shadow: none; border: 1px solid #dbe4f2; }
+    .explain { grid-template-rows: 1fr; } /* show all in print */
+  }
+</style>
+</head>
+<body>
+
+<div class="board">
+
+  <div class="board-head">
+    <h1>💼 Work Collocations — from "Guess the Job"</h1>
+    <span class="meta">27 phrases · click a phrase to see the explanation</span>
+  </div>
+
+  <main class="grid">
+
+    <!-- Teamwork -->
+    <section class="group c-team">
+      <h2>👥 Teamwork &amp; Conditions <span class="n">7</span></h2>
+      <ul>
+        <li>
+          <button class="phrase" type="button">work as part of a team</button>
+          <div class="explain"><div><p>to work together with other people</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">work alone</button>
+          <div class="explain"><div><p>to work by yourself</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">work long hours</button>
+          <div class="explain"><div><p>to work many hours</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">work at night</button>
+          <div class="explain"><div><p>to work during the night</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">work away from home</button>
+          <div class="explain"><div><p>to work far from your home</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">run a team</button>
+          <div class="explain"><div><p>to be the leader of a group</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">motivate the team</button>
+          <div class="explain"><div><p>to make the team want to work hard</p></div></div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Health -->
+    <section class="group c-health">
+      <h2>🩺 Health &amp; Helping <span class="n">3</span></h2>
+      <ul>
+        <li>
+          <button class="phrase" type="button">care for sick people</button>
+          <div class="explain"><div><p>to look after people who are ill</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">give medicine to patients</button>
+          <div class="explain"><div><p>to give medicine to sick people</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">rescue work</button>
+          <div class="explain"><div><p>to save people from danger</p></div></div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Science -->
+    <section class="group c-science">
+      <h2>🔬 Science &amp; Learning <span class="n">5</span></h2>
+      <ul>
+        <li>
+          <button class="phrase" type="button">do research</button>
+          <div class="explain"><div><p>to study something to find new facts</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">solve problems</button>
+          <div class="explain"><div><p>to find answers to difficult situations</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">study hard</button>
+          <div class="explain"><div><p>to spend a lot of time learning</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">learn new skills</button>
+          <div class="explain"><div><p>to learn new abilities</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">attend conferences</button>
+          <div class="explain"><div><p>to go to big meetings where people discuss work</p></div></div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Police & Army -->
+    <section class="group c-police">
+      <h2>🚓 Police &amp; Army <span class="n">5</span></h2>
+      <ul>
+        <li>
+          <button class="phrase" type="button">investigate crime</button>
+          <div class="explain"><div><p>to try to find out about a crime</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">respond to emergencies</button>
+          <div class="explain"><div><p>to act quickly in a dangerous situation</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">control traffic</button>
+          <div class="explain"><div><p>to direct cars</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">fight in wars</button>
+          <div class="explain"><div><p>to be a soldier in a war</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">keep fit</button>
+          <div class="explain"><div><p>to stay in good physical condition</p></div></div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Aviation -->
+    <section class="group c-avia">
+      <h2>✈️ Aviation &amp; Training <span class="n">2</span></h2>
+      <ul>
+        <li>
+          <button class="phrase" type="button">fly planes</button>
+          <div class="explain"><div><p>to control an aircraft</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">do a training course</button>
+          <div class="explain"><div><p>to take a course to learn job skills</p></div></div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Media -->
+    <section class="group c-media">
+      <h2>📰 Media &amp; Information <span class="n">3</span></h2>
+      <ul>
+        <li>
+          <button class="phrase" type="button">write news stories</button>
+          <div class="explain"><div><p>to write reports about recent events</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">gather information</button>
+          <div class="explain"><div><p>to collect facts</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">always know the latest news</button>
+          <div class="explain"><div><p>to have the most recent information</p></div></div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Business (wide) -->
+    <section class="group c-business wide">
+      <h2>💼 Business &amp; Sales <span class="n">2</span></h2>
+      <ul>
+        <li>
+          <button class="phrase" type="button">run a company</button>
+          <div class="explain"><div><p>to be in charge of a business</p></div></div>
+        </li>
+        <li>
+          <button class="phrase" type="button">give customers what they want</button>
+          <div class="explain"><div><p>to provide what clients need</p></div></div>
+        </li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (function () {
+    const phrases = document.querySelectorAll('.phrase');
+
+    phrases.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const li = btn.parentElement;
+        const explain = li.querySelector('.explain');
+        const wasOpen = btn.classList.contains('open');
+
+        // Close all open explanations first
+        document.querySelectorAll('.phrase.open').forEach(function (b) {
+          b.classList.remove('open');
+          b.parentElement.querySelector('.explain').classList.remove('open');
+        });
+
+        // If this one was closed, open it
+        if (!wasOpen) {
+          btn.classList.add('open');
+          explain.classList.add('open');
+        }
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
